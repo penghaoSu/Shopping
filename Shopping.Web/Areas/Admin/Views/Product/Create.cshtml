@@ -1,0 +1,255 @@
+﻿@model Shopping.Service.Models.ProductCreateViewModel
+
+<div class="body-title">
+    <h1>新增產品</h1>
+</div>
+
+<div class="body-content">
+    <form asp-action="Create" enctype="multipart/form-data">
+        <div class="form-horizontal">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <input id="isCreateCate" type="hidden" value="" />
+
+            <div class="form-group form-row">
+                <div class="col-md-1 text-right">
+                    <label asp-for="Product.ProductNumber" class="col-form-label symbol">產品編號</label>
+                </div>
+                <div class="col-md-3">
+                    <input asp-for="Product.ProductNumber" class="form-control" />
+                    <span asp-validation-for="Product.ProductNumber" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-1 text-right">
+                    <label asp-for="Product.ProductCateId" class="col-form-label symbol">產品類別</label>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex flex-row">
+                        <div style="width:85%;">
+                            <select id="ProductCate" class="form-control" asp-for="Product.ProductCateId">
+                                <option>= 請選擇類別 =</option>
+                            </select>
+                            <span asp-validation-for="Product.ProductCateId" class="text-danger"></span>
+                        </div>
+                        <div style="color:tomato;font-size:1.5em;padding-left:10px;">
+                            <a class="productCat" href="#" data-toggle="modal" data-target="#productCateModal">
+                                <i class="fas fa-plus-circle" style="color:Tomato"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-1 text-right">
+                    <label asp-for="Product.ProductName" class="col-form-label symbol">產品名稱</label>
+                </div>
+                <div class="col-md-3">
+                    <input asp-for="Product.ProductName" class="form-control" />
+                    <span asp-validation-for="Product.ProductName" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group form-row">
+                <div class="col-md-1 text-right">
+                    <label asp-for="Product.UnitId" class="col-form-label symbol">單位</label>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex flex-row">
+                        <div style="width:85%;">
+                            <select id="Unit" class="form-control" asp-for="Product.UnitId">
+                                <option>= 請選擇單位 =</option>
+                            </select>
+                            <span asp-validation-for="Product.UnitId" class="text-danger"></span>
+                        </div>
+                        <div style="color:tomato;font-size:1.5em;padding-left:10px;">
+                            <a class="unit" href="#" data-toggle="modal" data-target="#unitModal">
+                                <i class="fas fa-plus-circle" style="color:Tomato"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-1 text-right">
+                    <label asp-for="Product.UnitPrice" class="col-form-label symbol">單價</label>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" asp-for="Product.UnitPrice" class="form-control" min="1" data-val-required="必須填入數字" />
+                    <span asp-validation-for="Product.UnitPrice" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-1 text-right">
+                    <label asp-for="Product.Storage" class="col-form-label symbol">庫存量</label>
+                </div>
+                <div class="col-md-3">
+                    <input asp-for="Product.Storage" class="form-control" />
+                    <span asp-validation-for="Product.Storage" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group form-row">
+                <div class="col-md-1 text-right">
+                    <label asp-for="Product.ImagePath" class="col-form-label symbol">圖片</label>
+                </div>
+                <div class="col-md-3">
+                    <input type="file" id="files" name="files" class="form-control" multiple accept="image/*" onchange="PreviewImage();" />
+                    <span asp-validation-for="Product.ImagePath" class="text-danger"></span>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-md-1 col-form-label"></label>
+                    <div class="col-md-11">
+                        <img id="preview" src="#" style="width: auto; height: auto;" onerror="this.src='../../images/preload.png';" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row justify-content-center">
+            <div class="col-4 text-center">
+
+                <button type="submit" value="Create" class="btn btn-primary" id="Send">新增 <i class="fas fa-check"></i></button>
+                <a asp-action="Index" asp-controller="Home" class="btn btn-success">返回列表 <i class="fas fa-reply"></i></a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="productCateModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div id='myModalContent'></div>
+        </div>
+    </div>
+</div>
+
+<div id="unitModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div id='myModalContent'></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+
+        $(function () {
+
+            // 產品類別下拉選單
+            ProductCateSelectList();
+
+            // 產品單位下拉選單
+            UnitSelectList();
+        });
+
+        function ProductCateSelectList() {
+
+            $.ajax({
+                url: '@Url.Action("GetProductCateSelectList", "Product", new { Area = "Admin" })',
+                type: 'GET',
+                dataType: 'json',
+                success: function (result) {
+                    console.log(result.data);
+                    if (result.data != null) {
+                        $('#ProductCate').empty();
+                        $('#ProductCate').append($('<option></option>').val('').text('= 請選擇類別 ='));
+                        $.each(result.data, function (value, item) {
+                            $('#ProductCate').append($('<option value=' + item.id + '></option>').text(item.cateName));
+                        });
+                    }
+                }
+            });
+        }
+
+        function UnitSelectList() {
+
+            $.ajax({
+                url: '@Url.Action("GetUnitSelectList", "Product", new { Area = "Admin" })',
+                type: 'GET',
+                dataType: 'json',
+                success: function (result) {
+                    console.log(result.data);
+                    if (result.data != null) {
+                        $('#Unit').empty();
+                        $('#Unit').append($('<option></option>').val('').text('= 請選擇單位 ='));
+                        $.each(result.data, function (value, item) {
+                            $('#Unit').append($('<option value=' + item.id + '></option>').text(item.unitName));
+                        });
+                    }
+                }
+            });
+        }
+
+        $(".productCat").click(function () {
+
+            var TeamDetailPostBackURL = '@Url.Action("ProductCate", "Product", new { Area = "Admin" })';
+
+            $.ajax({
+                type: "GET",
+                url: TeamDetailPostBackURL,
+                contentType: "application/json; charset=utf-8",
+                datatype: "json",
+                success: function (data) {
+                    $("#isCreateCate").val(false);
+                    $('#myModalContent').html(data);
+                    $('.productCateModal').modal('show');
+
+                },
+                error: function () {
+                    alert("Dynamic content load failed.");
+                }
+            });
+        });
+
+        $("#closbtn").click(function () {
+            $('.UserModal').modal('hide');
+        });
+
+        $('#productCateModal').on('hidden.bs.modal', function (e) {
+
+            var isCreate = $('#isCreateCate').val();
+
+            if (isCreate == 'true') {
+                ProductCateSelectList();
+            }
+
+        });
+
+        $(".unit").click(function () {
+
+            var TeamDetailPostBackURL = '@Url.Action("ProductCate", "Product", new { Area = "Admin" })';
+
+            $.ajax({
+                type: "GET",
+                url: TeamDetailPostBackURL,
+                contentType: "application/json; charset=utf-8",
+                datatype: "json",
+                success: function (data) {
+                    $("#isCreateCate").val(false);
+                    $('#myModalContent').html(data);
+                    $('.productCateModal').modal('show');
+
+                },
+                error: function () {
+                    alert("Dynamic content load failed.");
+                }
+            });
+        });
+
+
+
+        // 預覽圖片
+        function PreviewImage() {
+            var oFReader = new FileReader(); // HTML5 File API
+            oFReader.readAsDataURL(document.getElementById("files").files[0]);
+
+            oFReader.onload = function (oFREvent) {
+                document.getElementById("preview").src = oFREvent.target.result;
+            };
+        };
+    </script>
+}
+
